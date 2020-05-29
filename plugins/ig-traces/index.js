@@ -57,13 +57,13 @@ function TraceViewer(props) {
     let traces = [];
     setLogs([]);
 
-    const cmd = ['/bin/sh', '-c', `curl --silent --unix-socket /run/traceloop.socket 'http://localhost/dump-by-traceid?traceid=${encodeURIComponent(trace.traceid)}' | tail -n${lines}`]
+    const cmd = ['/bin/sh', '-c', `curl --silent --unix-socket /run/traceloop.socket 'http://localhost/dump-by-traceid?traceid=${encodeURIComponent(trace.traceid)}' | tail -n${lines}`];
     const exec = api.exec(trace.pod.metadata.namespace,
       trace.pod.metadata.name,
       'gadget',
       items => {
         if (items) {
-          let text = decoder.decode(items.slice(1));
+          const text = decoder.decode(items.slice(1));
           if ((new Uint8Array(items))[0] !== 1) {
             return;
           }
@@ -130,12 +130,12 @@ function isIGPod(podResource) {
 }
 
 function getIGPodTraces(pod) {
-  let podTraces = JSON.parse(pod.metadata.annotations[TRACE_CONTENT_KEY] || '[]');
+  const podTraces = JSON.parse(pod.metadata.annotations[TRACE_CONTENT_KEY] || '[]');
 
   // Some traces have no podname and we don't want to show those.
   // We should emove it if Inspektor Gadget stops including such results.
-  let validTraces = podTraces.filter(trace => !!trace.podname);
-  validTraces.forEach(trace => trace['pod'] = pod);
+  const validTraces = podTraces.filter(trace => !!trace.podname);
+  validTraces.forEach(trace => { trace['pod'] = pod; });
 
   return validTraces;
 }
@@ -276,7 +276,7 @@ function TraceIcon(props) {
         continue;
       }
 
-      let itemTrace = getIGPodTraces(pod).find(({podname, namespace}) =>
+      const itemTrace = getIGPodTraces(pod).find(({podname, namespace}) =>
         item.metadata.name === podname && item.metadata.namespace === namespace);
       if (!!itemTrace) {
         if (!!trace && trace.traceid === itemTrace.traceid) {
@@ -304,7 +304,8 @@ function TraceIcon(props) {
       };
     }
 
-    cancel = api.pod.get.bind(null, igPod.metadata.namespace, igPod.metadata.name, (pod) => setPods([pod]));
+    cancel = api.pod.get.bind(null, igPod.metadata.namespace, igPod.metadata.name,
+                              (pod) => setPods([pod]));
 
     return function cleanup() {
       cancel();
