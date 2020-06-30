@@ -11,10 +11,9 @@ const {
   LogViewer,
   StatusLabel,
 } = window.pluginLib.CommonComponents;
-const { default: api, useConnectApi } = window.pluginLib.API;
+const K8s = window.pluginLib.K8s;
 const ReactRedux = window.pluginLib.ReactRedux;
 const {
-  Paper,
   IconButton,
   InputLabel,
   FormControl,
@@ -58,9 +57,7 @@ function TraceViewer(props) {
     setLogs([]);
 
     const cmd = ['/bin/sh', '-c', `curl --silent --unix-socket /run/traceloop.socket 'http://localhost/dump-by-traceid?traceid=${encodeURIComponent(trace.traceid)}' | tail -n${lines}`];
-    const exec = api.exec(trace.pod.metadata.namespace,
-      trace.pod.metadata.name,
-      'gadget',
+    const exec = trace.pod.exec('gadget',
       items => {
         if (items) {
           const text = decoder.decode(items.slice(1));
@@ -152,9 +149,7 @@ function TraceList() {
     setTraces(getAllTraces(igPods));
   }
 
-  useConnectApi(
-    api.pod.list.bind(null, null, setIGPods),
-  );
+  K8s.Pod.useApiList(setIGPods);
 
   function makeStatusLabel(trace) {
     const status = trace.status;
@@ -221,45 +216,44 @@ function TraceList() {
   }
 
   return (
-    <Paper>
-      <SectionFilterHeader title="Traces" />
-      <SectionBox>
-        <SimpleTable
-          rowsPerPage={[15, 25, 50]}
-          filterFunction={filterFunc}
-          columns={[
-            {
-              label: 'Name',
-              getter: (trace) =>
-                <Link
-                  className={classes.link}
-                  onClick={() => showTrace(trace)}
-                >
-                  {trace.podname}
-                </Link>
-            },
-            {
-              label: 'Namespace',
-              getter: (trace) => trace.namespace
-            },
-            {
-              label: 'Status',
-              getter: makeStatusLabel
-            },
-            {
-              label: 'Age',
-              getter: (trace) => timeAgo(trace.timecreation)
-            },
-          ]}
-          data={sortByStatus(traces)}
-        />
-        <TraceViewer
-          open={open}
-          trace={trace}
-          onClose={() => setOpen(false)}
-        />
-      </SectionBox>
-    </Paper>
+    <SectionBox
+      title={<SectionFilterHeader title="Traces" />}
+    >
+      <SimpleTable
+        rowsPerPage={[15, 25, 50]}
+        filterFunction={filterFunc}
+        columns={[
+          {
+            label: 'Name',
+            getter: (trace) =>
+              <Link
+                className={classes.link}
+                onClick={() => showTrace(trace)}
+              >
+                {trace.podname}
+              </Link>
+          },
+          {
+            label: 'Namespace',
+            getter: (trace) => trace.namespace
+          },
+          {
+            label: 'Status',
+            getter: makeStatusLabel
+          },
+          {
+            label: 'Age',
+            getter: (trace) => timeAgo(trace.timecreation)
+          },
+        ]}
+        data={sortByStatus(traces)}
+      />
+      <TraceViewer
+        open={open}
+        trace={trace}
+        onClose={() => setOpen(false)}
+      />
+    </SectionBox>
   );
 }
 
@@ -297,15 +291,15 @@ function TraceIcon(props) {
     let cancel;
 
     if (!igPod) {
-      cancel = api.pod.list.bind(null, null, setPods);
+      cancel = K8s.Pod.apiEndpoint.list.bind(null, null, setPods);
 
       return function cleanup() {
         cancel();
       };
     }
 
-    cancel = api.pod.get.bind(null, igPod.metadata.namespace, igPod.metadata.name,
-                              (pod) => setPods([pod]));
+    cancel = K8s.Pod.apiEndpoint.get.bind(null, igPod.metadata.namespace, igPod.metadata.name,
+                                          (pod) => setPods([pod]));
 
     return function cleanup() {
       cancel();
