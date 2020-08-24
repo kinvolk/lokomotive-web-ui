@@ -1,9 +1,9 @@
 import tracesIcon from '@iconify/icons-mdi/file-document-box-search-outline';
-import { Icon } from '@iconify/react';
-import _ from 'lodash';
 
+const _ = window.pluginLib.Lodash
 const React = window.pluginLib.React;
 const { timeAgo } = window.pluginLib.Utils;
+const { Icon } = window.pluginLib.Iconify;
 const {
   SimpleTable,
   SectionBox,
