@@ -11,7 +11,7 @@ const {
   LogViewer,
   StatusLabel,
 } = window.pluginLib.CommonComponents;
-const K8s = window.pluginLib.K8s;
+const K8s = window.pluginLib.K8s.ResourceClasses;
 const ReactRedux = window.pluginLib.ReactRedux;
 const {
   IconButton,
