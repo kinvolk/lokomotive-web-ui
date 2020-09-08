@@ -74,8 +74,13 @@ echo
 
 for i in "${PLUGINS[@]}"
 do
-    echo "Copying plugins/$i"
-    cp -R "${PLUGINS_DIR}/$i" "./frontend/src/plugin/plugins/"
+    cd "${PLUGINS_DIR}/$i" && npm install && npm run build 
+    echo "Creating $i in plugins dir at project backend"
+    cd "${BUILD_DIR}"
+    mkdir -p "./backend/plugins/$i"
+    
+    echo "Copying plugins/$i/dist/main.js"
+    cp -R "${PLUGINS_DIR}/$i/dist/main.js" "./backend/plugins/$i"
 done
 
 
