@@ -270,13 +270,15 @@ function TraceIcon(props) {
         continue;
       }
 
-      const itemTrace = getIGPodTraces(pod).find(({podname, namespace}) =>
+      let podObj = new K8s.Pod(pod)
+
+      const itemTrace = getIGPodTraces(podObj).find(({podname, namespace}) =>
         item.metadata.name === podname && item.metadata.namespace === namespace);
       if (!!itemTrace) {
         if (!!trace && trace.traceid === itemTrace.traceid) {
           return;
         }
-        setIGPod(pod);
+        setIGPod(podObj);
         setTrace(itemTrace);
         break;
       }
