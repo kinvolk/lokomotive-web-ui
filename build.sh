@@ -77,7 +77,7 @@ echo
 echo "Adding L8e plugins"
 echo
 
-for i in "${PLUGINS[@]}"
+for i in ${PLUGINS[@]}
 do
     cd "${PLUGINS_DIR}/$i" && npm install && npm run build 
     echo "Creating $i in plugins dir at project backend"
