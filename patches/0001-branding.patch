@@ -1,0 +1,48 @@
+diff --git a/frontend/public/index.html b/frontend/public/index.html
+index 5a235692..ea8317fe 100644
+--- a/frontend/public/index.html
++++ b/frontend/public/index.html
+@@ -12,7 +12,7 @@
+     <meta name="msapplication-TileColor" content="#fff">
+     <meta
+       name="description"
+-      content="Headlamp: Kubernetes Web UI"
++      content="Lokomotive Web UI"
+     />
+     <!-- Custom font -->
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Overpass&display=swap">
+@@ -32,7 +32,7 @@
+       work correctly both with client-side routing and a non-root public URL.
+       Learn how to configure a non-root public URL by running `npm run build`.
+     -->
+-    <title>Headlamp</title>
++    <title>Lokomotive Web UI</title>
+   </head>
+   <body>
+     <noscript>You need to enable JavaScript to run this app.</noscript>
+diff --git a/frontend/public/manifest.json b/frontend/public/manifest.json
+index f6f0d9cf..e23087e4 100644
+--- a/frontend/public/manifest.json
++++ b/frontend/public/manifest.json
+@@ -1,6 +1,6 @@
+ {
+-  "short_name": "Headlamp",
+-  "name": "Headlamp Kubernetes Dashboard",
++  "short_name": "Lokomotive Web UI",
++  "name": "Lokomotive Web UI",
+   "icons": [
+     {
+       "src": "favicon.ico",
+diff --git a/frontend/src/components/authchooser/index.tsx b/frontend/src/components/authchooser/index.tsx
+index c7c0992f..9d401394 100644
+--- a/frontend/src/components/authchooser/index.tsx
++++ b/frontend/src/components/authchooser/index.tsx
+@@ -145,7 +145,7 @@ function AuthChooser(){
+                   url={`${isDevMode || isElectron() ?
+                     'http://localhost:4466/' : '/'}oidc?dt=${Date()}&cluster=${getCluster()}`
+                   }
+-                  title="Headlamp Cluster Authentication"
++                  title="Cluster Authentication"
+                 >
+                   <ColorButton>Sign In</ColorButton>
+                 </OauthPopup>
