@@ -82,10 +82,10 @@ do
     cd "${PLUGINS_DIR}/$i" && npm install && npm run build 
     echo "Creating $i in plugins dir at project backend"
     cd "${BUILD_DIR}"
-    mkdir -p "./backend/plugins/$i"
-    
+    mkdir -p "./plugins/$i"
+
     echo "Copying plugins/$i/dist/main.js"
-    cp -R "${PLUGINS_DIR}/$i/dist/main.js" "./backend/plugins/$i"
+    cp -R "${PLUGINS_DIR}/$i/dist/main.js" "./plugins/$i"
 done
 
 
