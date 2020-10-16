@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# This script builds the Lokomotive Dashboard (based on Headlamp).
+# This script builds the Lokomotive Web UI (based on Headlamp).
 # Copyright © Kinvolk GmbH 2020
 #
 # Authors:
