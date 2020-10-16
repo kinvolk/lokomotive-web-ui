@@ -61,7 +61,12 @@ echo
 
 pushd $BUILD_DIR #> /dev/null
 
+# Patches
+for i in $(find "$TOPDIR/patches/" -name "*.patch"); do
+    git apply $i
+done
 
+# Assets
 for i in "${!ASSETS[@]}"
 do
     echo "Copying $i -> ${ASSETS[$i]}"

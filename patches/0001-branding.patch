@@ -1,0 +1,22 @@
+diff --git a/frontend/public/index.html b/frontend/public/index.html
+index 5a235692..ea8317fe 100644
+--- a/frontend/public/index.html
++++ b/frontend/public/index.html
+@@ -12,7 +12,7 @@
+     <meta name="msapplication-TileColor" content="#fff">
+     <meta
+       name="description"
+-      content="Headlamp: Kubernetes Web UI"
++      content="Lokomotive Web UI"
+     />
+     <!-- Custom font -->
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Overpass&display=swap">
+@@ -32,7 +32,7 @@
+       work correctly both with client-side routing and a non-root public URL.
+       Learn how to configure a non-root public URL by running `npm run build`.
+     -->
+-    <title>Headlamp</title>
++    <title>Lokomotive Web UI</title>
+   </head>
+   <body>
+     <noscript>You need to enable JavaScript to run this app.</noscript>
