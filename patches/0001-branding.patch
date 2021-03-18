@@ -1,5 +1,5 @@
 diff --git a/frontend/public/index.html b/frontend/public/index.html
-index 5a235692..ea8317fe 100644
+index 5a23569..ea8317f 100644
 --- a/frontend/public/index.html
 +++ b/frontend/public/index.html
 @@ -12,7 +12,7 @@
@@ -21,7 +21,7 @@ index 5a235692..ea8317fe 100644
    <body>
      <noscript>You need to enable JavaScript to run this app.</noscript>
 diff --git a/frontend/public/manifest.json b/frontend/public/manifest.json
-index f6f0d9cf..e23087e4 100644
+index f6f0d9c..e23087e 100644
 --- a/frontend/public/manifest.json
 +++ b/frontend/public/manifest.json
 @@ -1,6 +1,6 @@
@@ -34,15 +34,15 @@ index f6f0d9cf..e23087e4 100644
      {
        "src": "favicon.ico",
 diff --git a/frontend/src/components/authchooser/index.tsx b/frontend/src/components/authchooser/index.tsx
-index c7c0992f..9d401394 100644
+index 26aba8c..cb6c769 100644
 --- a/frontend/src/components/authchooser/index.tsx
 +++ b/frontend/src/components/authchooser/index.tsx
-@@ -145,7 +145,7 @@ function AuthChooser(){
-                   url={`${isDevMode || isElectron() ?
-                     'http://localhost:4466/' : '/'}oidc?dt=${Date()}&cluster=${getCluster()}`
-                   }
--                  title="Headlamp Cluster Authentication"
-+                  title="Cluster Authentication"
-                 >
-                   <ColorButton>Sign In</ColorButton>
-                 </OauthPopup>
+@@ -179,7 +179,7 @@ function AuthChooser(){
+                       url={`${isDevMode || isElectron() ?
+                         'http://localhost:4466/' : '/'}oidc?dt=${Date()}&cluster=${getCluster()}`
+                       }
+-                      title="Headlamp Cluster Authentication"
++                      title="Cluster Authentication"
+                     >
+                       <ColorButton>Sign In</ColorButton>
+                     </OauthPopup>
