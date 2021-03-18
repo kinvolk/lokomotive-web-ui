@@ -62,7 +62,7 @@ echo
 pushd $BUILD_DIR #> /dev/null
 
 # Patches
-for i in $(find "$TOPDIR/patches/" -name "*.patch"); do
+for i in $(find "$TOP_DIR/patches/" -name "*.patch"); do
     git apply $i
 done
 
