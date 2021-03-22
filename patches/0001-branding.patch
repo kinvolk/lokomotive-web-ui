@@ -1,5 +1,5 @@
 diff --git a/frontend/public/index.html b/frontend/public/index.html
-index 5a23569..ea8317f 100644
+index 5f4da1c..5f03248 100644
 --- a/frontend/public/index.html
 +++ b/frontend/public/index.html
 @@ -12,7 +12,7 @@
@@ -17,11 +17,11 @@ index 5a23569..ea8317f 100644
      -->
 -    <title>Headlamp</title>
 +    <title>Lokomotive Web UI</title>
+     <script>headlampBaseUrl='%PUBLIC_URL%';</script>
    </head>
    <body>
-     <noscript>You need to enable JavaScript to run this app.</noscript>
 diff --git a/frontend/public/manifest.json b/frontend/public/manifest.json
-index f6f0d9c..e23087e 100644
+index 2690da0..32afd63 100644
 --- a/frontend/public/manifest.json
 +++ b/frontend/public/manifest.json
 @@ -1,6 +1,6 @@
@@ -34,15 +34,15 @@ index f6f0d9c..e23087e 100644
      {
        "src": "favicon.ico",
 diff --git a/frontend/src/components/authchooser/index.tsx b/frontend/src/components/authchooser/index.tsx
-index 26aba8c..cb6c769 100644
+index fe9d1ff..b1f7427 100644
 --- a/frontend/src/components/authchooser/index.tsx
 +++ b/frontend/src/components/authchooser/index.tsx
-@@ -179,7 +179,7 @@ function AuthChooser(){
-                       url={`${isDevMode || isElectron() ?
-                         'http://localhost:4466/' : '/'}oidc?dt=${Date()}&cluster=${getCluster()}`
-                       }
--                      title="Headlamp Cluster Authentication"
-+                      title="Cluster Authentication"
-                     >
-                       <ColorButton>Sign In</ColorButton>
-                     </OauthPopup>
+@@ -218,7 +218,7 @@ export function PureAuthChooser({
+                   <OauthPopup
+                     onCode={handleOidcAuth}
+                     url={oauthUrl}
+-                    title="Headlamp Cluster Authentication"
++                    title="Cluster Authentication"
+                   >
+                     <ColorButton>Sign In</ColorButton>
+                   </OauthPopup>
