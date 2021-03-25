@@ -1,0 +1,17 @@
+name: Build
+on:
+  pull_request:
+    paths-ignore:
+    - 'README.md'
+  schedule: # Every day check to account for changes in Headlamp
+  - cron:  '0 10 * * *'
+jobs:
+  push_to_registry:
+    name: Test building Lokomotive Web UI
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Set up Lokomotive Web UI
+      run: |
+        ./build.sh --branch master -n

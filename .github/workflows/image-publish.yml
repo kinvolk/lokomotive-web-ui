@@ -1,0 +1,33 @@
+name: Publish container image
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Image tags (comma separated)'
+        required: true
+        default: 'latest'
+jobs:
+  push_to_registry:
+    name: Test building container image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get most recent Headlamp tag
+      id: gettag
+      run: |
+        echo ::set-output \
+        name=tag::$(curl -sL https://api.github.com/repos/kinvolk/headlamp/tags | jq -r ".[0].name")
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Set up Lokomotive Web UI
+      run: |
+        ./build.sh --branch ${{ steps.gettag.outputs.tag }} -n -w build-lokomotive
+    - name: Build & Push image
+      uses: docker/build-push-action@v1
+      with:
+        dockerfile: build-lokomotive/Dockerfile
+        path: build-lokomotive/
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+        registry: quay.io
+        repository: kinvolk/lokomotive-web-ui
+        tags: "${{ github.event.inputs.tags }}"
