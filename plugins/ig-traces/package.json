@@ -1,19 +1,24 @@
 {
-  "name": "ig-traces-plugin",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/index.js",
+  "name": "ig-traces",
+  "version": "1.0.1",
+  "description": "Show Inspektor Gadget's traceloops",
   "scripts": {
-    "build": "headlamp-plugin",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "headlamp-plugin start",
+    "build": "headlamp-plugin build"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Kinvolk GmbH",
   "license": "Apache 2.0",
-  "dependencies": {
-    "@iconify/icons-mdi": "^1.0.130"
-  },
+  "keywords": [
+    "headlamp",
+    "headlamp-plugin",
+    "kubernetes",
+    "plugins",
+    "inspektor-gadget"
+  ],
   "devDependencies": {
-    "@kinvolk/headlamp-plugin": "^0.1.0"
+    "@kinvolk/headlamp-plugin": "^0.2.0"
+  },
+  "dependencies": {
+    "@iconify/icons-mdi": "^1.1.13"
   }
 }
