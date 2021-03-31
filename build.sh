@@ -23,8 +23,8 @@ TOP_DIR=$(realpath "./$(dirname ${BASH_SOURCE[0]})")
 BUILD_DIR=
 REPO="https://github.com/kinvolk/headlamp.git"
 BRANCH=master
-PLUGINS_DIR="$TOP_DIR/plugins"
-PLUGINS=$(ls ${PLUGINS_DIR})
+PLUGINS_SRC_DIR="$TOP_DIR/plugins"
+PLUGINS=$(ls ${PLUGINS_SRC_DIR})
 DRY_RUN=
 
 ARGS=$(getopt -o "b:w:nh" -l "branch:,workdir:,dry-run,help" \
@@ -95,17 +95,18 @@ echo
 echo "Adding L8e plugins"
 echo
 
+PLUGINS_DIR="${BUILD_DIR}/plugins"
+
+mkdir -p ${PLUGINS_DIR}
+
 for i in ${PLUGINS[@]}
 do
-    cd "${PLUGINS_DIR}/$i" && npm install && npm run build 
-    echo "Creating $i in plugins dir at project backend"
-    cd "${BUILD_DIR}"
-    mkdir -p "./plugins/$i"
-
-    echo "Copying plugins/$i/dist/main.js"
-    cp -R "${PLUGINS_DIR}/$i/dist/main.js" "./plugins/$i"
+    pushd "${PLUGINS_SRC_DIR}/$i"
+    npm install && npm run build
+    popd
 done
 
+npx @kinvolk/headlamp-plugin extract "${PLUGINS_SRC_DIR}" "${PLUGINS_DIR}"
 
 # Return value
 ret=0
