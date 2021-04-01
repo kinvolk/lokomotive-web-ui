@@ -111,7 +111,7 @@ npx @kinvolk/headlamp-plugin extract "${PLUGINS_SRC_DIR}" "${PLUGINS_DIR}"
 # Return value
 ret=0
 
-if [ -n $DRY_RUN ]; then
+if [ ! -z $DRY_RUN ]; then
     exit $ret
 fi
 
