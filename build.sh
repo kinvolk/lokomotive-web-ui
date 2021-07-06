@@ -119,7 +119,7 @@ echo
 echo "Creating container..."
 echo
 
-make image || ret=$?
+DOCKER_IMAGE_NAME=lokomotive-web-ui make image || ret=$?
 
 echo
 

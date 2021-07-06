@@ -34,15 +34,15 @@ index 2690da0..32afd63 100644
      {
        "src": "favicon.ico",
 diff --git a/frontend/src/components/authchooser/index.tsx b/frontend/src/components/authchooser/index.tsx
-index fe9d1ff..b1f7427 100644
+index fe54c50..23b794d 100644
 --- a/frontend/src/components/authchooser/index.tsx
 +++ b/frontend/src/components/authchooser/index.tsx
-@@ -218,7 +218,7 @@ export function PureAuthChooser({
+@@ -254,7 +254,7 @@ export function PureAuthChooser({
                    <OauthPopup
                      onCode={handleOidcAuth}
                      url={oauthUrl}
--                    title="Headlamp Cluster Authentication"
-+                    title="Cluster Authentication"
+-                    title={t('Headlamp Cluster Authentication')}
++                    title={t('Cluster Authentication')}
+                     button={ColorButton as typeof Button}
                    >
-                     <ColorButton>Sign In</ColorButton>
-                   </OauthPopup>
+                     {t('Sign In') as string}
