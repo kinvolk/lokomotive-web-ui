@@ -22,7 +22,7 @@ EOF
 TOP_DIR=$(realpath "./$(dirname ${BASH_SOURCE[0]})")
 BUILD_DIR=
 REPO="https://github.com/kinvolk/headlamp.git"
-BRANCH=master
+BRANCH=main
 PLUGINS_SRC_DIR="$TOP_DIR/plugins"
 PLUGINS=$(ls ${PLUGINS_SRC_DIR})
 DRY_RUN=
