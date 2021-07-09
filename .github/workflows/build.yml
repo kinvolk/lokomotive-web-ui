@@ -14,4 +14,4 @@ jobs:
       uses: actions/checkout@v2
     - name: Set up Lokomotive Web UI
       run: |
-        ./build.sh --branch master -n
+        ./build.sh --branch main -n
