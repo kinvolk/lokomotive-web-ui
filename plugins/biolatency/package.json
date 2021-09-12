@@ -1,0 +1,23 @@
+{
+  "name": "biolatency",
+  "version": "1.0.0",
+  "description": "Allow checking for Block I/O devices latency",
+  "scripts": {
+    "start": "headlamp-plugin start",
+    "build": "headlamp-plugin build"
+  },
+  "keywords": [
+    "headlamp",
+    "headlamp-plugin",
+    "kubernetes",
+    "plugins",
+    "grafana"
+  ],
+  "author": "Kinvolk GmbH",
+  "devDependencies": {
+    "@kinvolk/headlamp-plugin": "^0.3.2"
+  },
+  "dependencies": {
+    "@iconify/icons-mdi": "^1.1.31"
+  }
+}
