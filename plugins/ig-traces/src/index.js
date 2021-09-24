@@ -145,6 +145,10 @@ function TraceList() {
   const classes = useStyle();
 
   function setIGPods(items) {
+    if (!items) {
+      return;
+    }
+
     const igPods = items.filter(item => isIGPod(item));
     setTraces(getAllTraces(igPods));
   }
