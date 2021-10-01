@@ -15,9 +15,9 @@
   ],
   "author": "Kinvolk GmbH",
   "devDependencies": {
-    "@kinvolk/headlamp-plugin": "^0.2.0"
+    "@kinvolk/headlamp-plugin": "^0.3.2"
   },
   "dependencies": {
-    "@iconify/icons-mdi": "^1.1.13"
+    "@iconify/icons-mdi": "^1.1.31"
   }
 }
