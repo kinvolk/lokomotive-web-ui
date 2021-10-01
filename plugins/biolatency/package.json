@@ -1,7 +1,7 @@
 {
-  "name": "monitor-link",
-  "version": "0.1.1",
-  "description": "Show a link to grafana if it is deployed",
+  "name": "biolatency",
+  "version": "1.0.0",
+  "description": "Allow checking for Block I/O devices latency",
   "scripts": {
     "start": "headlamp-plugin start",
     "build": "headlamp-plugin build"
