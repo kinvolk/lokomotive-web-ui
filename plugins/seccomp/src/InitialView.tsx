@@ -9,7 +9,9 @@ const React = pluginLib.React;
 
 export default function SeccompPolicyInitialView() {
   const { namespace } = useParams();
+
   return (
+    <>
     <Grid
       container
       direction="column"
@@ -22,11 +24,13 @@ export default function SeccompPolicyInitialView() {
         <Typography variant="h6">Press start to start gathering the seccomp policies</Typography>
       </Grid>
       <Grid item>
-        <Button variant="outlined" onClick={() => startRecordingSysCalls(namespace)}>
+        <Button variant="outlined" onClick={() => {
+          startRecordingSysCalls(namespace)}}>
           <Icon icon={playIcon} width="30" height="30" />
           <Typography variant="h6">Start</Typography>
         </Button>
       </Grid>
     </Grid>
+    </>
   );
 }

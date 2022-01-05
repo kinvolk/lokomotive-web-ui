@@ -1,6 +1,5 @@
 import { addTimestamp, generateSeccompProfile, stopSysCallGathering } from './api';
 import Timer from './Timer';
-import SeccompPoliciesTableView from './PoliciesTable';
 import stopIcon from '@iconify/icons-mdi/stop';
 
 const pluginLib = window.pluginLib;
@@ -13,16 +12,18 @@ const K8s = pluginLib.K8s.ResourceClasses;
 
 export default function SeccompPolicyPolicyGatheringView(props: any) {
   const { namespace } = useParams();
-  const { timestamp, seccompPolicies, appliedPolicies } = props;
+  const { timestamp, currentTracingNamespace } = props;
   const [isGatheringPolicies, setIsGatheringPolicies] = React.useState(false);
   const [pods, error] = K8s.Pod.useList();
   console.log(error);
+
   function stopSysCallGatheringHandler() {
     // before we stop sysCallGathering we need to generate seccomp profiles
     setIsGatheringPolicies(true);
     generateSeccompProfile(namespace, pods)
       .then(() => {
-        stopSysCallGathering().then(() => {
+        stopSysCallGathering().then((response: any) => {
+          console.log("stop response")
           setIsGatheringPolicies(false);
           addTimestamp(new Date().getTime().toString(), 'headlampSeccompFinalTimestamp');
         });
@@ -36,7 +37,7 @@ export default function SeccompPolicyPolicyGatheringView(props: any) {
     <Box>
       <Grid container justifyContent="center" alignItems="center" spacing={2}>
         <Grid item>
-          <Typography variant="h6">Gathering policies on namespace {namespace} for</Typography>
+          <Typography variant="h6">Gathering policies on namespace {currentTracingNamespace} for</Typography>
         </Grid>
         <Grid item>
           <Timer sysCallCheckTimestamp={timestamp} />
@@ -47,7 +48,9 @@ export default function SeccompPolicyPolicyGatheringView(props: any) {
         <Grid item>
           <Button
             variant="outlined"
-            onClick={stopSysCallGatheringHandler}
+            onClick={() => {
+              stopSysCallGatheringHandler()
+            }}
             disabled={isGatheringPolicies}
           >
             <Icon icon={stopIcon} width="40" height="40" />
@@ -55,12 +58,6 @@ export default function SeccompPolicyPolicyGatheringView(props: any) {
           </Button>
         </Grid>
       </Grid>
-      {seccompPolicies !== null && (
-        <SeccompPoliciesTableView
-          seccompPolicies={seccompPolicies}
-          appliedPolicies={appliedPolicies}
-        />
-      )}
     </Box>
   );
 }

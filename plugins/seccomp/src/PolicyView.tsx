@@ -1,6 +1,7 @@
 import { getSeccompResult, SeccompProfilesApi } from './api';
-import { checkIfPolicyNotApplied, parseSeccompAnnotations } from './helper';
+import { parseSeccompAnnotations } from './helper';
 import SeccompPolicyInitialView from './InitialView';
+import SeccompPoliciesTableView from './PoliciesTable';
 import SeccompPolicyPolicyGatheringView from './PolicyGatheringView';
 import SeccompPolicyResultView from './PolicyResultView';
 
@@ -27,6 +28,7 @@ export default function SeccompPolicyView() {
   const [seccompPolicies, setSeccompPolicies] = React.useState(null);
   const [appliedPolicies, setAppliedPolicies] = React.useState(null);
   const [pods, error] = K8s.Pod.useList();
+  const [currentTracingNamespace, setCurrentTracingNamespace] = React.useState(null);
   console.log(error);
   React.useEffect(() => {
     if (pods) {
@@ -61,9 +63,19 @@ export default function SeccompPolicyView() {
       );
     }
   }, [pods]);
-
   React.useEffect(() => {
     getSeccompResult(data => {
+      if(data?.status?.operationError && data?.status?.state === 'Started') {
+        setOperationError(data.status.operationError);
+        setSeccompStatus(SeccompStatus.SECCOMP_NOT_STARTED);
+        return;
+      }
+      // This means we are viewing a view for which the trace is not running
+      setCurrentTracingNamespace(data?.spec?.filter?.namespace);
+      if (data?.status?.operationError) {
+          setOperationError(data.status.operationError);
+          return;
+      }
       if (data?.metadata?.annotations?.headlampSeccompTimestamp) {
         setSeccompDefaultTimestamp(data.metadata.annotations.headlampSeccompTimestamp);
         setSeccompStatus(SeccompStatus.SECCOMP_STARTED);
@@ -85,11 +97,14 @@ export default function SeccompPolicyView() {
         setSeccompStatus(SeccompStatus.SECCOMP_STARTED);
       }
       if (data?.status?.state === 'Stopped') {
+        console.log("here")
         setSeccompStatus(SeccompStatus.SECCOMP_STOPPED);
       }
     });
   }, []);
-  let componentToRender = <SeccompPolicyInitialView />;
+  
+  let componentToRender = <SeccompPolicyInitialView operationError={operationError}/>;
+  
   switch (seccompStatus) {
     case SeccompStatus.SECCOMP_STARTED:
       componentToRender = (
@@ -97,6 +112,8 @@ export default function SeccompPolicyView() {
           timestamp={seccompDefaultTimestamp}
           seccompPolicies={seccompPolicies}
           appliedPolicies={appliedPolicies}
+          operationError={operationError}
+          currentTracingNamespace={currentTracingNamespace}
         />
       );
       break;
@@ -112,7 +129,7 @@ export default function SeccompPolicyView() {
       );
       break;
     default:
-      componentToRender = <SeccompPolicyInitialView />;
+      componentToRender = <SeccompPolicyInitialView operationError={operationError} />;
   }
 
   return (
@@ -124,6 +141,12 @@ export default function SeccompPolicyView() {
       }
     >
       {componentToRender}
+      {seccompPolicies !== null && (
+        <SeccompPoliciesTableView
+          seccompPolicies={seccompPolicies}
+          appliedPolicies={appliedPolicies}
+        />
+      )}
     </SectionBox>
   );
 }

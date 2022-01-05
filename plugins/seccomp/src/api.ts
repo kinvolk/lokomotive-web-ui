@@ -5,8 +5,8 @@ const K8s = pluginLib.K8s.ResourceClasses;
 const ResourceAPI = new K8s.CustomResource('gadget.kinvolk.io', 'v1alpha1', 'traces');
 
 export const SeccompProfilesApi = ApiProxy.apiFactoryWithNamespace(
-  ['security-profiles-operator.x-k8s.io', 'v1beta1', 'seccompprofiles'],
-  ['security-profiles-operator.x-k8s.io', 'v1alpha1', 'seccompprofiles']
+  ['security-profiles-operator.x-k8s.io', 'v1alpha1', 'seccompprofiles'],
+  ['security-profiles-operator.x-k8s.io', 'v1beta1', 'seccompprofiles']
 );
 
 export function startRecordingSysCalls(namespace: string) {

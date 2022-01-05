@@ -28,8 +28,6 @@ function SeccompPoliciesTableView(props: any) {
   const workflows = policiesToConsider?.map(
     (policy: any) => `${policy.rootWorkload}(${policy.rootWorkloadName})`
   );
-  console.log('seccomp policies', seccompPolicies);
-  console.log('massaged seccomp policies', massagedSeccompPolicies);
   const [massagedAppliedPolicies, setMassagedAppliedPolicies] = React.useState(appliedPolicies);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
@@ -128,6 +126,9 @@ function SeccompPoliciesTableView(props: any) {
       })
       .then(() => {
         closeSnackbar(key);
+        let tempSelectedPolicies = [...selectedPolicies];
+        console.log(tempSelectedPolicies);
+        setSelectedPolicies(null);
         enqueueSnackbar(
           `Deleted Policies ${policiesToDelete
             .map((policy: any) => policy?.metadata?.name)
@@ -136,17 +137,15 @@ function SeccompPoliciesTableView(props: any) {
             variant: 'success',
           }
         );
-        setMassagedSeccompPolicies(
-          massagedSeccompPolicies.filter(
-            (policy: any) => !selectedPolicies.includes(policy?.metadata?.uid)
+        setMassagedSeccompPolicies((massagedSeccompPolicies) => massagedSeccompPolicies.filter(
+            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
           )
         );
-        setMassagedAppliedPolicies(
+        setMassagedAppliedPolicies((massagedAppliedPolicies) =>
           massagedAppliedPolicies.filter(
-            (policy: any) => !selectedPolicies.includes(policy?.metadata?.uid)
+            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
           )
         );
-        setSelectedPolicies(null);
       });
   }
 
@@ -164,8 +163,6 @@ function SeccompPoliciesTableView(props: any) {
     const massagedPoliciesToConsider = policiesToConsider.filter(
       (policy: any) => policy?.rootWorkload !== 'Pod'
     );
-    console.log(standalonePods);
-
     massagedPoliciesToConsider.forEach((policy: any) => {
       applySeccompProfileToWorkload(policy.rootWorkloadName, namespace, policy.rootWorkload, {
         type: 'Localhost',
@@ -175,10 +172,8 @@ function SeccompPoliciesTableView(props: any) {
           enqueueSnackbar(`policy ${policy?.metadata?.name} successfully applied`, {
             variant: 'success',
           });
-          console.log('here');
-
           setSelectedPolicies(null);
-          setMassagedSeccompPolicies(
+          setMassagedSeccompPolicies((massagedSeccompPolicies) =>
             massagedSeccompPolicies.filter(
               (policyItem: any) => policyItem.metadata.name !== policy.metadata.name
             )
@@ -212,7 +207,10 @@ function SeccompPoliciesTableView(props: any) {
         open={isConfirmDialogOpen}
         description={generateDialogDescription()}
         onConfirm={handleConfirm}
-        handleClose={() => setIsConfirmDialogOpen(false)}
+        handleClose={() => {
+          setIsConfirmDialogOpen(false)
+          setSelectedPolicies(null);
+        }}
       />
       {selectedPolicies?.length > 0 && (
         <Grid container spacing={2}>
