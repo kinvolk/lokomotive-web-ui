@@ -1,25 +1,42 @@
 import { applySeccompProfileToWorkload, deleteSeccompPolicy, updateSeccompPolicy } from './api';
 import FindRootWorkload, { parseSeccompAnnotations } from './helper';
 import checkIcon from '@iconify/icons-mdi/check';
+import infoIcon from '@iconify/icons-mdi/info-circle-outline';
 
 const pluginLib = window.pluginLib;
-const { Link, SimpleTable, EditorDialog, ConfirmDialog, SectionBox } = pluginLib.CommonComponents;
-const { Grid, Button, Typography, Checkbox, Box } = pluginLib.MuiCore;
+const { Link, SimpleTable, EditorDialog, ConfirmDialog, SectionBox, SectionHeader } =
+  pluginLib.CommonComponents;
+const { Grid, Button, Typography, Checkbox, Box, Tooltip, IconButton } = pluginLib.MuiCore;
 const React = pluginLib.React;
 const { useParams } = pluginLib.ReactRouter;
-const { useSnackbar } = pluginLib.Notistack
+const { useSnackbar } = pluginLib.Notistack;
 const { Icon } = pluginLib.Iconify;
 
-function SeccompPoliciesTableView(props: any) {
-  const { seccompPolicies, appliedPolicies } = props;
-  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
-  const [editorValue, setEditorValue] = React.useState(null);
-  const [errorMessage, setErrorMessage] = React.useState(null);
+interface PolicyTableViewGenerator {
+  title: string;
+  setIsEditorOpen: (data: boolean) => any;
+  setEditorValue: (data: any) => any;
+  tableData: any[];
+  handlePolicyDelete: (policiesToDelete: any, resetPolicySelect: () => any) => void;
+  shouldHaveApply?: boolean;
+  callback?: (...args: any) => void;
+}
+
+function PolicyTableViewGenerator(props: PolicyTableViewGenerator) {
+  const { namespace } = useParams();
+  const {
+    title,
+    setIsEditorOpen,
+    setEditorValue,
+    tableData,
+    handlePolicyDelete,
+    shouldHaveApply,
+    callback,
+  } = props;
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [selectedPolicies, setSelectedPolicies] = React.useState(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false);
-  const { namespace } = useParams();
-  const [massagedSeccompPolicies, setMassagedSeccompPolicies] = React.useState(seccompPolicies);
-  const policiesToConsider = massagedSeccompPolicies?.filter((policy: any) =>
+  const policiesToConsider = tableData?.filter((policy: any) =>
     selectedPolicies?.includes(policy?.metadata.uid)
   );
   const podsToConsider = policiesToConsider
@@ -28,40 +45,19 @@ function SeccompPoliciesTableView(props: any) {
   const workflows = policiesToConsider?.map(
     (policy: any) => `${policy.rootWorkload}(${policy.rootWorkloadName})`
   );
-  const [massagedAppliedPolicies, setMassagedAppliedPolicies] = React.useState(appliedPolicies);
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  React.useEffect(() => {
-    const rootWorkloadApiForPods = seccompPolicies?.map((policy: any) => {
-      return FindRootWorkload(parseSeccompAnnotations(policy, 'pod', namespace), namespace);
-    });
-    rootWorkloadApiForPods &&
-      Promise.all(rootWorkloadApiForPods)
-        .catch((error: Error) => {
-          console.error(error);
-          return rootWorkloadApiForPods;
-        })
-        .then((rootWorkloads: any) => {
-          console.log('seccomp policies inside promise', seccompPolicies);
-          setMassagedSeccompPolicies((seccompPolicies: any) =>
-            seccompPolicies.map((policy: any, index: number) => {
-              policy.rootWorkload = rootWorkloads[index]?.kind;
-              policy.rootWorkloadName = rootWorkloads[index]?.name;
-              return { ...policy };
-            })
-          );
-        });
-  }, [seccompPolicies]);
+  function generateDialogDescription() {
+    return `These seccomp policies were generated for pods ${podsToConsider} which belongs to workflow
+      ${workflows?.join(', ')}.
+      Do you want to patch these workflows to use these policies?
+      Warning: This will restart the pods`;
+  }
+  function handlePolicyApply() {
+    setIsConfirmDialogOpen(true);
+  }
 
-  function handleSave(value: any) {
-    updateSeccompPolicy(value)
-      .then(() => {
-        setIsEditorOpen(false);
-        setSelectedPolicies(null);
-      })
-      .catch((err: Error) => {
-        setErrorMessage(err.message);
-      });
+  function handlePolicyMerge() {
+    setIsConfirmDialogOpen(true);
   }
 
   function handleCheckBox(e: any, data: any) {
@@ -72,88 +68,6 @@ function SeccompPoliciesTableView(props: any) {
       policies.splice(policies.indexOf(data), 1);
     }
     setSelectedPolicies(policies);
-  }
-
-  function handlePolicyApply() {
-    setIsConfirmDialogOpen(true);
-  }
-
-  function handlePolicyMerge() {
-    setIsConfirmDialogOpen(true);
-  }
-
-  function handlePolicyDelete(policiesToDelete: any) {
-    console.log('delete', policiesToDelete);
-    //it could be a delete request for an applied policy or a non-applied policy so consider both
-    const policiesObjects = massagedSeccompPolicies
-      ?.concat(massagedAppliedPolicies)
-      .filter((policy: any) => policiesToDelete.includes(policy?.metadata?.uid));
-    const policiesToDeleteName = policiesObjects
-      .map((policy: any) => policy?.metadata?.name)
-      .join(', ');
-
-    enqueueSnackbar(`Are you sure you want to delete policies ${policiesToDeleteName}`, {
-      action: key => (
-        <>
-          <Button
-            onClick={() => {
-              closeSnackbar(key);
-              policyDelete(policiesObjects);
-            }}
-            color="secondary"
-          >
-            Yes
-          </Button>
-          <Button onClick={() => closeSnackbar(key)} color="secondary">
-            No
-          </Button>
-        </>
-      ),
-      persist: true,
-    });
-  }
-
-  function policyDelete(policiesToDelete: any) {
-    const key = enqueueSnackbar('Delete in progress', { variant: 'warning', persist: true });
-    const deletePolicyApi = policiesToDelete.map((policy: any) => {
-      return deleteSeccompPolicy(policy);
-    });
-
-    Promise.all(deletePolicyApi)
-      .catch(error => {
-        console.error(error);
-        return deletePolicyApi;
-      })
-      .then(() => {
-        closeSnackbar(key);
-        let tempSelectedPolicies = [...selectedPolicies];
-        console.log(tempSelectedPolicies);
-        setSelectedPolicies(null);
-        enqueueSnackbar(
-          `Deleted Policies ${policiesToDelete
-            .map((policy: any) => policy?.metadata?.name)
-            .join(', ')} successfully`,
-          {
-            variant: 'success',
-          }
-        );
-        setMassagedSeccompPolicies((massagedSeccompPolicies) => massagedSeccompPolicies.filter(
-            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
-          )
-        );
-        setMassagedAppliedPolicies((massagedAppliedPolicies) =>
-          massagedAppliedPolicies.filter(
-            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
-          )
-        );
-      });
-  }
-
-  function generateDialogDescription() {
-    return `These seccomp policies were generated for pods ${podsToConsider} which belongs to workflow
-      ${workflows?.join(', ')}.
-      Do you want to patch these workflows to use these policies?
-      Warning: This will restart the pods`;
   }
 
   function handleConfirm() {
@@ -173,11 +87,7 @@ function SeccompPoliciesTableView(props: any) {
             variant: 'success',
           });
           setSelectedPolicies(null);
-          setMassagedSeccompPolicies((massagedSeccompPolicies) =>
-            massagedSeccompPolicies.filter(
-              (policyItem: any) => policyItem.metadata.name !== policy.metadata.name
-            )
-          );
+          callback(policy);
         })
         .catch((error: Error) => {
           console.log(error);
@@ -200,85 +110,54 @@ function SeccompPoliciesTableView(props: any) {
     }
     setSelectedPolicies(null);
   }
-  console.log('selected policies', selectedPolicies);
+
   return (
-    <Box py={1}>
+    <Box py={2}>
       <ConfirmDialog
         open={isConfirmDialogOpen}
         description={generateDialogDescription()}
         onConfirm={handleConfirm}
         handleClose={() => {
-          setIsConfirmDialogOpen(false)
+          setIsConfirmDialogOpen(false);
           setSelectedPolicies(null);
         }}
       />
       {selectedPolicies?.length > 0 && (
         <Grid container spacing={2}>
-          <Grid item>
-            <Button variant="outlined" onClick={handlePolicyApply}>
-              <Icon icon={checkIcon} width="20" height="20" />
-              <Typography>Apply</Typography>
-            </Button>
-          </Grid>
+          {shouldHaveApply && (
+            <Grid item>
+              <Button variant="outlined" onClick={handlePolicyApply}>
+                <Icon icon={checkIcon} width="20" height="20" />
+                <Typography>Apply</Typography>
+              </Button>
+            </Grid>
+          )}
           {/* The merge functionality still needs to be completed */}
           {/* <Grid item>
-            <Button variant="outlined" onClick={handlePolicyMerge}>
-              <Typography>Merge</Typography>
-            </Button>
-          </Grid> */}
+          <Button variant="outlined" onClick={handlePolicyMerge}>
+            <Typography>Merge</Typography>
+          </Button>
+        </Grid> */}
           <Grid item>
-            <Button variant="outlined" onClick={() => handlePolicyDelete(selectedPolicies)}>
+            <Button
+              variant="outlined"
+              onClick={() => handlePolicyDelete(selectedPolicies, () => setSelectedPolicies(null))}
+            >
               <Typography>Delete</Typography>
             </Button>
           </Grid>
         </Grid>
       )}
-      <SimpleTable
-        columns={[
-          {
-            getter: (data: any) => (
-              <Checkbox
-                onChange={(e: any) => handleCheckBox(e, data.metadata.uid)}
-                checked={Boolean(selectedPolicies) && selectedPolicies?.includes(data.metadata.uid)}
-              />
-            ),
-          },
-          {
-            label: 'Policy',
-            getter: (data: any) => (
-              <Link
-                onClick={() => {
-                  setIsEditorOpen(true);
-                  setEditorValue(data);
-                }}
-              >
-                {data.metadata.name}
-              </Link>
-            ),
-          },
-          {
-            label: 'Pod',
-            getter: (data: any) => parseSeccompAnnotations(data, 'pod', namespace),
-          },
-          {
-            label: 'Container',
-            getter: (data: any) => parseSeccompAnnotations(data, 'container', namespace),
-          },
-          {
-            label: 'Date',
-            getter: (data: any) => new Date(data.metadata.creationTimestamp).toLocaleString(),
-          },
-        ]}
-        data={massagedSeccompPolicies}
-      />
-      <SectionBox title="Applied Policies List">
+      <SectionBox title={title}>
         <SimpleTable
           columns={[
             {
               getter: (data: any) => (
                 <Checkbox
                   onChange={(e: any) => handleCheckBox(e, data.metadata.uid)}
-                  checked={selectedPolicies?.includes(data.metadata.uid)}
+                  checked={
+                    Boolean(selectedPolicies) && selectedPolicies?.includes(data.metadata.uid)
+                  }
                 />
               ),
             },
@@ -308,9 +187,170 @@ function SeccompPoliciesTableView(props: any) {
               getter: (data: any) => new Date(data.metadata.creationTimestamp).toLocaleString(),
             },
           ]}
-          data={massagedAppliedPolicies}
+          data={tableData}
         />
       </SectionBox>
+    </Box>
+  );
+}
+
+function SeccompPoliciesTableView(props: any) {
+  const { seccompPolicies, appliedPolicies, danglingPolicies } = props;
+  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
+  const [editorValue, setEditorValue] = React.useState(null);
+  const [errorMessage, setErrorMessage] = React.useState(null);
+  const { namespace } = useParams();
+  const [massagedSeccompPolicies, setMassagedSeccompPolicies] = React.useState(seccompPolicies);
+
+  const [massagedAppliedPolicies, setMassagedAppliedPolicies] = React.useState(appliedPolicies);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+  React.useEffect(() => {
+    const rootWorkloadApiForPods = seccompPolicies?.map((policy: any) => {
+      return FindRootWorkload(parseSeccompAnnotations(policy, 'pod', namespace), namespace);
+    });
+    rootWorkloadApiForPods &&
+      Promise.all(rootWorkloadApiForPods)
+        .catch((error: Error) => {
+          console.error(error);
+          return rootWorkloadApiForPods;
+        })
+        .then((rootWorkloads: any) => {
+          setMassagedSeccompPolicies((seccompPolicies: any) =>
+            seccompPolicies.map((policy: any, index: number) => {
+              policy.rootWorkload = rootWorkloads[index]?.kind;
+              policy.rootWorkloadName = rootWorkloads[index]?.name;
+              return { ...policy };
+            })
+          );
+        });
+  }, [seccompPolicies]);
+
+  function handleSave(value: any) {
+    updateSeccompPolicy(value)
+      .then(() => {
+        setIsEditorOpen(false);
+      })
+      .catch((err: Error) => {
+        setErrorMessage(err.message);
+      });
+  }
+
+  function handlePolicyDelete(policiesToDelete: any, resetSelectedPolicies: () => any) {
+    //it could be a delete request for an applied policy or a non-applied policy or a dangling policy so consider all
+    const policiesObjects = massagedSeccompPolicies
+      ?.concat(massagedAppliedPolicies)
+      ?.concat(danglingPolicies)
+      .filter((policy: any) => policiesToDelete.includes(policy?.metadata?.uid));
+    const policiesToDeleteName = policiesObjects
+      .map((policy: any) => policy?.metadata?.name)
+      .join(', ');
+    enqueueSnackbar(`Are you sure you want to delete policies ${policiesToDeleteName}`, {
+      action: key => (
+        <>
+          <Button
+            onClick={() => {
+              closeSnackbar(key);
+              policyDelete(policiesObjects, policiesToDelete, resetSelectedPolicies);
+            }}
+            color="secondary"
+          >
+            Yes
+          </Button>
+          <Button onClick={() => closeSnackbar(key)} color="secondary">
+            No
+          </Button>
+        </>
+      ),
+      persist: true,
+    });
+  }
+
+  function policyDelete(
+    policiesToDelete: any,
+    selectedPolicies: string[],
+    resetSelectedPolicies: () => void
+  ) {
+    const key = enqueueSnackbar('Delete in progress', { variant: 'warning', persist: true });
+    const deletePolicyApi = policiesToDelete.map((policy: any) => {
+      return deleteSeccompPolicy(policy);
+    });
+
+    Promise.all(deletePolicyApi)
+      .catch(error => {
+        console.error(error);
+        return deletePolicyApi;
+      })
+      .then(() => {
+        closeSnackbar(key);
+        let tempSelectedPolicies = [...selectedPolicies];
+        resetSelectedPolicies();
+        enqueueSnackbar(
+          `Deleted Policies ${policiesToDelete
+            .map((policy: any) => policy?.metadata?.name)
+            .join(', ')} successfully`,
+          {
+            variant: 'success',
+          }
+        );
+        // refetch policy list to get the updated set of policies
+        setMassagedSeccompPolicies(massagedSeccompPolicies =>
+          massagedSeccompPolicies.filter(
+            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
+          )
+        );
+        setMassagedAppliedPolicies(massagedAppliedPolicies =>
+          massagedAppliedPolicies.filter(
+            (policy: any) => !tempSelectedPolicies.includes(policy?.metadata?.uid)
+          )
+        );
+      });
+  }
+
+  return (
+    <Box py={1}>
+      <PolicyTableViewGenerator
+        title="Seccomp Policies"
+        tableData={massagedSeccompPolicies}
+        setIsEditorOpen={setIsEditorOpen}
+        setEditorValue={setEditorValue}
+        handlePolicyDelete={handlePolicyDelete}
+        shouldHaveApply={true}
+        callback={(item: any) =>
+          setMassagedSeccompPolicies(
+            massagedSeccompPolicies.filter(
+              (policyItem: any) => policyItem.metadata.name !== item?.metadata.name
+            )
+          )
+        }
+      />
+      <PolicyTableViewGenerator
+        title="Applied Policies List"
+        tableData={massagedAppliedPolicies}
+        setIsEditorOpen={setIsEditorOpen}
+        setEditorValue={setEditorValue}
+        handlePolicyDelete={handlePolicyDelete}
+      />
+      <PolicyTableViewGenerator
+        title={
+          <SectionHeader
+            title={
+              <>
+                Dangling Policies
+                <Tooltip title="Policies for which a Pod couldn't be found">
+                  <IconButton>
+                    <Icon icon={infoIcon} width="20" height="20" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            }
+          />
+        }
+        tableData={danglingPolicies}
+        setIsEditorOpen={setIsEditorOpen}
+        setEditorValue={setEditorValue}
+        handlePolicyDelete={handlePolicyDelete}
+      />
       {editorValue && (
         <EditorDialog
           item={editorValue}
@@ -328,4 +368,5 @@ function SeccompPoliciesTableView(props: any) {
   );
 }
 
-export default SeccompPoliciesTableView;
+// Return the previous render value if props haven't changed
+export default React.memo(SeccompPoliciesTableView);
