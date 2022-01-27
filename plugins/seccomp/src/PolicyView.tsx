@@ -7,10 +7,11 @@ import SeccompPolicyResultView from './PolicyResultView';
 
 const pluginLib = window.pluginLib;
 const { Typography } = pluginLib.MuiCore;
-const { SectionBox } = pluginLib.CommonComponents;
+const { SectionBox, Loader } = pluginLib.CommonComponents;
 const React = pluginLib.React;
 const { useParams } = pluginLib.ReactRouter;
 const K8s = pluginLib.K8s.ResourceClasses;
+const { useSnackbar } = pluginLib.Notistack;
 
 enum SeccompStatus {
   SECCOMP_NOT_STARTED = -1,
@@ -24,57 +25,82 @@ export default function SeccompPolicyView() {
   const [seccompDefaultTimestamp, setSeccompDefaultTimestamp] = React.useState(null);
   const [seccompFinalTimestamp, setSeccompFinalTimestamp] = React.useState(null);
   const [seccompStartTimestamp, setSeccompStartTimestamp] = React.useState(null);
-  const [operationError, setOperationError] = React.useState(null);
   const [seccompPolicies, setSeccompPolicies] = React.useState(null);
   const [appliedPolicies, setAppliedPolicies] = React.useState(null);
-  const [pods, error] = K8s.Pod.useList();
+  const [danglingPolicies, setDanglingPolicies] = React.useState(null);
+  const [pods] = K8s.Pod.useList();
+  const { enqueueSnackbar } = useSnackbar();
   const [currentTracingNamespace, setCurrentTracingNamespace] = React.useState(null);
-  console.log(error);
+
+  function listPolicies() {
+    SeccompProfilesApi.list(
+      namespace,
+      (data: any) => {
+        const massagedData = data?.map((item: any) => ({
+          ...item,
+          pod: pods.find(
+            (pod: any) => pod.metadata.name === parseSeccompAnnotations(item, 'pod', namespace)
+          ),
+        }));
+        const filteredData = massagedData.filter(
+          (policy: any) =>
+            !!policy.pod &&
+            !(policy?.status?.activeWorkloads && policy?.status?.activeWorkloads.length !== 0)
+        );
+
+        const appliedPolicies = massagedData
+          ?.filter((policy: any) => policy?.status?.status !== 'Terminating')
+          .filter(
+            (policy: any) =>
+              policy?.status?.activeWorkloads && policy?.status?.activeWorkloads.length !== 0
+          );
+        const staledPolicies = massagedData.filter(
+          (policy: any) =>
+            !policy.pod &&
+            !(policy?.status?.activeWorkloads && policy?.status?.activeWorkloads.length !== 0)
+        );
+        setAppliedPolicies(appliedPolicies);
+        setSeccompPolicies(filteredData);
+        setDanglingPolicies(staledPolicies);
+      },
+      (error: any) => {
+        enqueueSnackbar(`Error: ${error}`, { preventDuplicate: true });
+      }
+    );
+  }
+
   React.useEffect(() => {
     if (pods) {
-      SeccompProfilesApi.list(
-        namespace,
-        (data: any) => {
-          // don't consider policies that are in terminating state
-          const massagedData = data
-            ?.filter((policy: any) => policy?.status?.status !== 'Terminating')
-            .map((item: any) => ({
-              ...item,
-              pod: pods.find(
-                (pod: any) => pod.metadata.name === parseSeccompAnnotations(item, 'pod', namespace)
-              ),
-            }));
-          const filteredData = massagedData.filter(
-            (policy: any) =>
-              !!policy.pod && !(policy?.status?.activeWorkloads && policy?.status?.activeWorkloads.length !== 0)
-          );
-          const appliedPolicies = data
-            ?.filter((policy: any) => policy?.status?.status !== 'Terminating')
-            .filter(
-              (policy: any) =>
-                policy?.status?.activeWorkloads && policy?.status?.activeWorkloads.length !== 0
-            );
-          setAppliedPolicies(appliedPolicies);
-          setSeccompPolicies(filteredData);
-        },
-        (error: any) => {
-          console.log(error);
-        }
-      );
+      listPolicies();
     }
   }, [pods]);
+
   React.useEffect(() => {
     getSeccompResult(data => {
-      if(data?.status?.operationError && data?.status?.state === 'Started') {
-        setOperationError(data.status.operationError);
+      if (data?.status?.operationError && data?.status?.state === 'Started') {
+        enqueueSnackbar(`Error: ${data?.status?.operationError}`, {
+          variant: 'error',
+          preventDuplicate: true,
+        });
         setSeccompStatus(SeccompStatus.SECCOMP_NOT_STARTED);
         return;
       }
       // This means we are viewing a view for which the trace is not running
       setCurrentTracingNamespace(data?.spec?.filter?.namespace);
+
+      // If this annotation is present on custom resource it means inspektor-gadeget didn't process the request
+      if (data?.metadata?.annotations['gadget.kinvolk.io/operation']) {
+        enqueueSnackbar(`Error: Looks like the gadget pod is not responding to requests`, {
+          variant: 'error',
+          preventDuplicate: true,
+        });
+      }
       if (data?.status?.operationError) {
-          setOperationError(data.status.operationError);
-          return;
+        enqueueSnackbar(`Error: ${data.status.operationError}`, {
+          variant: 'error',
+          preventDuplicate: true,
+        });
+        return;
       }
       if (data?.metadata?.annotations?.headlampSeccompTimestamp) {
         setSeccompDefaultTimestamp(data.metadata.annotations.headlampSeccompTimestamp);
@@ -83,36 +109,29 @@ export default function SeccompPolicyView() {
       } else {
         setSeccompDefaultTimestamp(null);
       }
+      // If there is already a timestamp available on CR start from there
       if (data?.metadata?.annotations?.headlampSeccompStartTimestamp) {
         setSeccompStartTimestamp(data.metadata.annotations.headlampSeccompStartTimestamp);
       }
       if (data?.metadata?.annotations?.headlampSeccompFinalTimestamp) {
         setSeccompFinalTimestamp(data.metadata.annotations.headlampSeccompFinalTimestamp);
       }
-      if (data?.status?.operationError) {
-        setOperationError(data.status.operationError);
-        return;
-      }
       if (data?.status?.state === 'Started') {
         setSeccompStatus(SeccompStatus.SECCOMP_STARTED);
       }
       if (data?.status?.state === 'Stopped') {
-        console.log("here")
         setSeccompStatus(SeccompStatus.SECCOMP_STOPPED);
       }
     });
   }, []);
-  
-  let componentToRender = <SeccompPolicyInitialView operationError={operationError}/>;
-  
+
+  let componentToRender = <SeccompPolicyInitialView />;
+
   switch (seccompStatus) {
     case SeccompStatus.SECCOMP_STARTED:
       componentToRender = (
         <SeccompPolicyPolicyGatheringView
           timestamp={seccompDefaultTimestamp}
-          seccompPolicies={seccompPolicies}
-          appliedPolicies={appliedPolicies}
-          operationError={operationError}
           currentTracingNamespace={currentTracingNamespace}
         />
       );
@@ -122,14 +141,11 @@ export default function SeccompPolicyView() {
         <SeccompPolicyResultView
           startTimestamp={seccompStartTimestamp}
           finalTimestamp={seccompFinalTimestamp}
-          operationError={operationError}
-          seccompPolicies={seccompPolicies}
-          appliedPolicies={appliedPolicies}
         />
       );
       break;
     default:
-      componentToRender = <SeccompPolicyInitialView operationError={operationError} />;
+      componentToRender = <SeccompPolicyInitialView />;
   }
 
   return (
@@ -141,11 +157,14 @@ export default function SeccompPolicyView() {
       }
     >
       {componentToRender}
-      {seccompPolicies !== null && (
+      {seccompPolicies !== null ? (
         <SeccompPoliciesTableView
           seccompPolicies={seccompPolicies}
           appliedPolicies={appliedPolicies}
+          danglingPolicies={danglingPolicies}
         />
+      ) : (
+        <Loader />
       )}
     </SectionBox>
   );
