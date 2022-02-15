@@ -1,0 +1,1 @@
+### Place your logos for small and large screen here by the name small.svg and large.svg
