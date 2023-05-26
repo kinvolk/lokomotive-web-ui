@@ -1,3 +1,5 @@
+🪦 DISCONTINUED Further Lokomotive development and its Web UI has been discontinued. It was based on [Headlamp](https://github.com/headlamp-k8s/headlamp), in which you may be interested if you're looking for a flexible and powerful Kubernetes UI.
+
 # Lokomotive Web UI <img align="right" width=384 src="https://raw.githubusercontent.com/kinvolk/lokomotive/master/docs/images/lokomotive-logo.svg">
 
 Lokomotive is an open source Kubernetes distribution that ships pure upstream
