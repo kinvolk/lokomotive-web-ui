@@ -1,0 +1,24 @@
+{
+    "name": "branding_change",
+    "version": "1.0.0",
+    "description": "Allow changing headlamp official branding",
+    "scripts": {
+        "start": "headlamp-plugin start",
+        "build": "headlamp-plugin build"
+    },
+    "keywords": [
+        "headlamp",
+        "headlamp-plugin",
+        "kubernetes",
+        "plugins",
+        "grafana"
+    ],
+    "author": "Kinvolk GmbH",
+    "devDependencies": {
+        "@kinvolk/headlamp-plugin": "^0.3.2",
+        "@types/node": "^17.0.17"
+    },
+    "dependencies": {
+        "@iconify/icons-mdi": "^1.1.31"
+    }
+}
